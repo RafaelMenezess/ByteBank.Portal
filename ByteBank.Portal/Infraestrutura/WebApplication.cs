@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net;
-using System.Text;
+using System.Reflection;
 
 namespace ByteBank.Portal.Infraestrutura
 {
@@ -16,6 +16,14 @@ namespace ByteBank.Portal.Infraestrutura
         }
         public void Iniciar()
         {
+            while (true)
+            {
+                ManipularRequisicao();
+            }
+        }
+
+        private void ManipularRequisicao()
+        {
             var httpListiner = new HttpListener();
 
             foreach (var prefixo in _prefixos)
@@ -29,19 +37,46 @@ namespace ByteBank.Portal.Infraestrutura
             var requisicao = contexto.Request;
             var resposta = contexto.Response;
 
-            var respostaConteudo = "Hello World";
-            var respostaConteudoBytes = Encoding.UTF8.GetBytes(respostaConteudo);
+            var path = requisicao.Url.AbsolutePath;
 
-            resposta.ContentType = "text/html; charset=utf-8";
-            resposta.StatusCode = 200;
-            resposta.ContentLength64 = respostaConteudoBytes.Length;
+            if (path == "/Assets/css/styles.css")
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                var nameResource = "ByteBank.Portal.Assets.css.styles.css";
 
-            resposta.OutputStream.Write(respostaConteudoBytes, 0, respostaConteudoBytes.Length);
+                var resourceStream = assembly.GetManifestResourceStream(nameResource);
+                var bytesResource = new byte[resourceStream.Length];
 
-            resposta.OutputStream.Close();
+                resourceStream.Read(bytesResource, 0, bytesResource.Length);
+
+                resposta.ContentType = "text/css; charset=utf-8";
+                resposta.StatusCode = 200;
+                resposta.ContentLength64 = resourceStream.Length;
+
+                resposta.OutputStream.Write(bytesResource, 0, bytesResource.Length);
+
+                resposta.OutputStream.Close();
+            }
+            else if (path == "/Assets/js/main.js")
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                var nameResource = "ByteBank.Portal.Assets.js.main.js";
+
+                var resourceStream = assembly.GetManifestResourceStream(nameResource);
+                var bytesResource = new byte[resourceStream.Length];
+
+                resourceStream.Read(bytesResource, 0, bytesResource.Length);
+
+                resposta.ContentType = "application/js; charset=utf-8";
+                resposta.StatusCode = 200;
+                resposta.ContentLength64 = resourceStream.Length;
+
+                resposta.OutputStream.Write(bytesResource, 0, bytesResource.Length);
+
+                resposta.OutputStream.Close();
+            }
 
             httpListiner.Stop();
-
         }
     }
 }
